@@ -1,4 +1,4 @@
-from elevator import Elevator
+from elevator.elevator import Elevator
 
 # Generating people
 class Generator():
