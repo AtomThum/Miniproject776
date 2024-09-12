@@ -1,5 +1,5 @@
-from elevator.elevator import Elevator
-from elevator.queues import InternalQueue, ExternalQueue, Outlist
+from elevator.elevator import *
+from elevator.queues import *
 
 testInternalQueue = InternalQueue(floorAmount=6)
 testExternalQueueUp = ExternalQueue(floorAmount=6)

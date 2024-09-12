@@ -1,4 +1,4 @@
-from people import People
+from elevator.people import *
 
 
 # Outlist - for storing people that already left the elevator.

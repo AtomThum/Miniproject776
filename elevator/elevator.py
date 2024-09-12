@@ -1,5 +1,5 @@
-from people import People
-from queues import Outlist, InternalQueue, ExternalQueue
+from elevator.people import *
+from elevator.queues import *
 
 
 # Initializing the Elevator class
