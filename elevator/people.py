@@ -17,3 +17,11 @@ class People:
             elevatorBreakCount  # The amount of pauses before reaching the destination
         )
         self.description = f"[{self.amount} people. Destination: {self.destinationFloor}. Started: {self.startingFloor}]"
+    
+    # Progress waiting time
+    def progressWaitingTime(self, timePassed: int):
+        self.waitingTimer += timePassed
+    
+    # Progress journey time
+    def progressJourneyTime(self, timePassed: int):
+        self.journeyTimer += timePassed
