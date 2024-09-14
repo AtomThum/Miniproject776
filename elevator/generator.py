@@ -43,9 +43,11 @@ class Generator:
                 )[0]
                 possibleFinalFloor = self.finalFloorRange.copy()
                 possibleFinalFloor.remove(initFloor)
+                possibleFinalFloorWeight = self.finalFloorWeight.copy()
+                del possibleFinalFloorWeight[initFloor]
                 finalFloor = random.choices(
                     population=possibleFinalFloor,
-                    weights=self.finalFloorWeight,
+                    weights=possibleFinalFloorWeight,
                 )[0]
                 peopleAmount = random.choices(
                     population=self.amountRange, weights=self.amountWeight

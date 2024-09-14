@@ -19,7 +19,7 @@ class Elevator:
         progression: float = 0,
         activeSpeed: float = 5,
         bufferSpeed: float = 1,
-        timePerStep: float = 1
+        timePerStep: float = 1,
     ):
         # Properties of elevator
         self.currentDirection = (
@@ -42,7 +42,7 @@ class Elevator:
         self.externalQueueUp = externalQueueUp
         self.externalQueueDown = externalQueueDown
         self.outlist = outlist
-    
+
     # Adding people to external queue
     def addToExternalQueue(self, *args: People):
         peopleUp, peopleDown = [], []
@@ -52,17 +52,17 @@ class Elevator:
         ]
         self.externalQueueUp.appendToQueue(*peopleUp)
         self.externalQueueDown.appendToQueue(*peopleDown)
-    
+
     # Adding people to internal queue
     def addToInternalQueue(self, *args: People):
         for people in args:
             self.internalQueue.appendToQueue(people)
-    
+
     # Unload from internal queue
     def unloadFromInternalQueue(self):
         outPeople = self.internalQueue.unloadFromFloor(self.currentFloor)
         self.outlist.appendToOutlist(*outPeople)
-    
+
     # Load people from external queue to internal
     def loadToInternalQueue(self):
         roomLeft = self.carryingCapacity - self.internalQueue.peopleAmount
@@ -93,7 +93,7 @@ class Elevator:
                 self.externalQueueDown.queue[self.currentFloor] = (
                     self.externalQueueDown.queue[self.currentFloor][peopleIndex:]
                 )
-    
+
     # Progressing the waiting time of people
     def progressTime(self, timePassed: float):
         for floor in self.internalQueue.queue:
@@ -105,7 +105,41 @@ class Elevator:
         for floor in self.externalQueueDown.queue:
             for people in floor:
                 setattr(people, "waitingTimer", people.waitingTimer + timePassed)
-    
+
+    # Finding the next floor that the elevator should go
+    def nextFloor(self):
+        # For elevators that's going up
+        internalNextFloor = self.currentFloor
+        externalNextFloor = self.currentFloor
+        if self.direction:
+            for i in range(self.currentFloor + 1, self.highestFloor + 1):
+                if self.internalQueue.queue[i]:
+                    pass
+                else:
+                    internalNextFloor = i
+                    break
+            for i in range(self.currentFloor + 1, self.highestFloor + 1):
+                if self.externalQueueUp.queue[i]:
+                    pass
+                else:
+                    externalNextFloor = i
+                    break
+            return min(internalNextFloor, externalNextFloor)
+        else:
+            for i in range(self.currentFloor - 1, self.lowestFloor - 1, -1):
+                if self.internalQueue.queue[i]:
+                    pass
+                else:
+                    internalNextFloor = i
+                    break
+            for i in range(self.currentFloor - 1, self.lowestFloor - 1, -1):
+                if self.externalQueueDown.queue[i]:
+                    pass
+                else:
+                    externalNextFloor = i
+                    break
+            return max(internalNextFloor, externalNextFloor)
+
     # Progressing the elevator
     def progressElevator(self):
         # If at top, revert direction
@@ -118,10 +152,11 @@ class Elevator:
             self.currentFloor += 1
             self.progression = 0
         # If at buffer, slow down speed
-        if self.progression >= self.bufferCutoff:
-            speed = self.bufferSpeed
-        else:
-            speed = self.activeSpeed
+        if abs(self.nextFloor(self) - self.currentFloor):
+            if self.progression >= self.bufferCutoff:
+                speed = self.bufferSpeed
+            else:
+                speed = self.activeSpeed
         # Add progression to elevator
         self.progression += speed
         if self.progression > 100:
