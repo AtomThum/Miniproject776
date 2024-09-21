@@ -24,9 +24,28 @@ elevator = Elevator(
     bufferSpeed=1,
 )
 
-elevator.addToExternalQueue(People(4, 1))
+generator = Generator(
+    initFloorRange=list(range(0, 6)),
+    initFloorWeight=[1 / 6] * 6,
+    finalFloorRange=list(range(0, 6)),
+    finalFloorWeight=[1 / 6] * 6,
+    amountRange=list(range(1, 4)),
+    amountWeight=[1 / 3] * 3,
+    targetElevator=elevator,
+    attemptPerCall=3,
+    probability=0.05,
+)
+
+generator.generatePeopleToElevator()
 print(elevator.externalQueueUp.queue)
 print(elevator.externalQueueDown.queue)
 
-print(f"Next Floor is: {elevator.scanNextFloor()}")
-print(f"Current elevator direction: {elevator.currentDirection}")
+tickAmount = 1000
+for tick in range(tickAmount):
+    generator.generatePeopleToElevator()
+    elevator.progressElevator()
+    if elevator.progression == 0:
+        elevator.unloadFromInternalQueue()
+        elevator.loadToInternalQueue()
+    else:
+        pass

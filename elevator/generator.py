@@ -60,3 +60,6 @@ class Generator:
                     )
                 )
         return generatedPeople
+
+    def generatePeopleToElevator(self):
+        self.targetElevator.addToExternalQueue(*self.generatePeople())
