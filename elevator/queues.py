@@ -31,6 +31,10 @@ class InternalQueue:
         self.peopleAmount -= leavingAmount
         self.queue[floor] = []
         return temp
+    
+    def printQueue(self):
+        fullList = [i.destinationFloor for j in self.queue for i in j]
+        print([f"Going to {_}: {fullList.count(_)}" for _ in set(fullList)])
 
 
 # External queue
@@ -43,3 +47,9 @@ class ExternalQueue:
     def appendToQueue(self, *args):
         for people in args:
             self.queue[people.startingFloor].append(people)
+
+    def printQueue(self):
+        for i in range(len(self.queue)):
+            print(f"Floor: {i}")
+            peopleList = [_.destinationFloor for _ in self.queue[i]]
+            print([f"Going to {_}: {peopleList.count(_)}" for _ in set(peopleList)])
