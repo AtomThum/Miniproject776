@@ -7,8 +7,7 @@ import random
 class Generator:
     def __init__(
         self,
-        initFloorRange: list,
-        initFloorWeight: list,
+        initFloor: int,
         finalFloorRange: list,
         finalFloorWeight: list,
         amountRange: list,
@@ -19,14 +18,12 @@ class Generator:
     ):
         self.targetElevator = targetElevator
 
-        self.initFloorRange = initFloorRange
         self.finalFloorRange = finalFloorRange
         self.amountRange = amountRange
 
-        self.initFloorWeight = initFloorWeight
         self.finalFloorWeight = finalFloorWeight
         self.amountWeight = amountWeight
-        self.attemptPerCall = attemptPerCall
+        self.attemptPerCall = attemptPerCall  # The amount per attempt
 
         self.probability = probability
 
@@ -34,27 +31,25 @@ class Generator:
     def generatePeople(self):
         generatedPeople = []
         for _ in range(self.attemptPerCall):
-            if random.random() > self.probability:
+            if (
+                random.random() > self.probability
+            ):  # Don't generate if random variable is more than fixed probability
                 pass
             else:
-                initFloor = random.choices(
-                    population=self.initFloorRange,
-                    weights=self.initFloorWeight,
-                )[0]
-                possibleFinalFloor = self.finalFloorRange.copy()
-                possibleFinalFloor.remove(initFloor)
-                possibleFinalFloorWeight = self.finalFloorWeight.copy()
-                del possibleFinalFloorWeight[initFloor]
+
                 finalFloor = random.choices(
-                    population=possibleFinalFloor,
-                    weights=possibleFinalFloorWeight,
-                )[0]
+                    population=self.finalFloorRange,
+                    weights=self.finalFloorWeight,
+                    k=1
+                )[0]  # Generate final floor
+
                 peopleAmount = random.choices(
-                    population=self.amountRange, weights=self.amountWeight
+                    population=self.amountRange, weights=self.amountWeight, k=1
                 )[0]
+
                 generatedPeople.append(
                     People(
-                        startingFloor=initFloor,
+                        startingFloor=self.initFloor,
                         destinationFloor=finalFloor,
                         amount=peopleAmount,
                     )

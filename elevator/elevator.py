@@ -51,7 +51,7 @@ class Elevator:
         self.externalQueueDown = externalQueueDown
         self.outlist = outlist
 
-    def updateDirection(self):
+    def updateEdgeDirection(self):
         isAtLowestFloor = self.currentFloor == self.lowestFloor
         isAtHighestFloor = self.currentFloor == self.highestFloor
         if isAtLowestFloor:
@@ -94,7 +94,7 @@ class Elevator:
     # Updating the next floor
     # Only changes when people are added or removed
     def updateNextFloor(self):
-        self.updateDirection()
+        self.updateEdgeDirection()
         self.nextFloor = self.scanNextFloor()
         if self.nextFloor - self.currentFloor > 0:
             self.currentDirection = True
