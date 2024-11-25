@@ -41,12 +41,14 @@ class InternalQueue:
 class ExternalQueue:
     def __init__(self, floorAmount: int):
         self.queue = [[] for _ in range(floorAmount)]
+        self.peopleAmount = 0
     
     # External queue focuses on people entering
     # Append people to a floor queue
     def appendToQueue(self, *args):
         for people in args:
             self.queue[people.startingFloor].append(people)
+            self.peopleAmount += people.amount
 
     def printQueue(self):
         for i in range(len(self.queue)):

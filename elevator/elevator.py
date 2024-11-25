@@ -1,7 +1,7 @@
 from elevator.people import People
 from elevator.queues import Outlist, InternalQueue, ExternalQueue
-from collections import deque
 import itertools as itr
+import pprint as pp
 
 
 # Initializing the Elevator class
@@ -28,77 +28,73 @@ class Elevator:
         # Properties of elevator
         self.currentDirection = currentDirection  # True if elevator is going up, false if elevator is going down
         self.currentFloor = currentFloor
-        self.nextFloor = currentFloor  # When initialized, set equal to current floor. Will be updated later in self.updateNextFloor()
-        self.lowestFloor = lowestFloor
+        self.nextFloor = currentFloor  # Is set to current floor when initialized, but will be updated later by the self.updateNextFloor() function
+        self.lowestFloor = lowestFloor  # Normally set to zero
         self.highestFloor = highestFloor
         self.carryingCapacity = carryingCapacity
         self.progression = (
-            # Acts like percentage, range from 1-100. Is an integer to avoid floating points arithmetic.
+            # Acts like percentage. Ranges from 1-100. Uses integers to avoid floating points arithmetic.
             progression
         )
-        self.activeSpeed = (
-            activeSpeed  # Increments progression when the elevator is not accelerating
-        )
-        self.bufferSpeed = (
-            bufferSpeed  # Increments progression when the elevator is decelerating
-        )
-        self.bufferCutoff = bufferCutoff  # If progression is higher than bufferCutoff, the speed will be set to bufferSpeed
+        self.activeSpeed = activeSpeed  # Speed used to increment the elevator's progression when the elevator isn't accelerating
+        self.bufferSpeed = bufferSpeed  # Speed used to increment the elevator's progression when the elevator is decelerating
+        self.bufferCutoff = bufferCutoff  # When progression is higher than buffer cut-off, the buffer speed will be used
         self.timePerStep = (
             timePerStep  # Time increment when self.progressElevator() is called
         )
         self.loadTimePerPeople = loadTimePerPeople  # Time increment when self.loadToInternalQueue() is called
         self.unloadTimePerPeople = unloadTimePerPeople  # Time increment when self.unloadFromInternalQueue() is called
+
         # Queues
         self.internalQueue = internalQueue
         self.externalQueueUp = externalQueueUp
         self.externalQueueDown = externalQueueDown
         self.outlist = outlist
 
-    # Finding the next floor that the elevator should go
+    def updateDirection(self):
+        isAtLowestFloor = self.currentFloor == self.lowestFloor
+        isAtHighestFloor = self.currentFloor == self.highestFloor
+        if isAtLowestFloor:
+            self.currentDirection = True
+        elif isAtHighestFloor:
+            self.currentDirection = False
+
+    # Finding the next floor that the elevator should travel to
     def scanNextFloor(self):
-        # Edge cases: Elevator is at the highest or lowest floor, and doesn't revert direction
-        # If there is no one at that floor, revert direction.
-        self.currentDirection = (
-            False
-            if self.currentFloor == self.highestFloor
-            and (not self.externalQueueDown.queue[self.highestFloor])
-            and (not self.externalQueueUp.queue[self.highestFloor])
-            else self.currentDirection
-        )
-        self.currentDirection = (
-            True
-            if self.currentFloor == self.lowestFloor
-            and (not self.externalQueueDown.queue[self.lowestFloor])
-            and (not self.externalQueueUp.queue[self.lowestFloor])
-            else self.currentDirection
-        )
-        # If elevator is going up
-        if self.currentDirection:
-            for floor in range(self.currentFloor, self.highestFloor + 1, 1):
+        if self.currentDirection:  # If the elevator is going up
+            for floor in range(
+                self.currentFloor, self.highestFloor + 1, 1
+            ):  # Check from the current floor to the highest.
                 if self.internalQueue.queue[floor] or self.externalQueueUp.queue[floor]:
                     return floor
-            for floor in range(self.highestFloor, self.lowestFloor - 1, -1):
+            for floor in range(
+                self.highestFloor, self.lowestFloor - 1, -1
+            ):  # If there is no one, then revert direction and check from the highest to the lowest
                 if (
                     self.internalQueue.queue[floor]
                     or self.externalQueueDown.queue[floor]
                 ):
                     return floor
-        # If self is going down
-        else:
-            for floor in range(self.currentFloor, self.lowestFloor - 1, -1):
+        else:  # If the elevator is going down
+            for floor in range(
+                self.currentFloor, self.lowestFloor - 1, -1
+            ):  # Check from the current floor to the lowest
                 if (
                     self.internalQueue.queue[floor]
                     or self.externalQueueDown.queue[floor]
                 ):
                     return floor
-            for floor in range(self.lowestFloor, self.highestFloor + 1, 1):
+            for floor in range(
+                self.lowestFloor, self.highestFloor + 1, 1
+            ):  # If there is no one, then revert the direction and check from the lowest to highest
                 if self.internalQueue.queue[floor] or self.externalQueueUp.queue[floor]:
                     return floor
         return self.currentFloor
 
-    # Updating what the next floor is
-    # MUST be called every time people is added or removed
+    # Updating the next floor
+    # Only changes when people are added or removed
     def updateNextFloor(self):
+        self.updateDirection()
         self.nextFloor = self.scanNextFloor()
         if self.nextFloor - self.currentFloor > 0:
             self.currentDirection = True
@@ -107,30 +103,32 @@ class Elevator:
         else:
             pass
 
-    # Progresses the time of people.
+    # Progresses the timer of the people.
     # Will be called when
-    # 1. Mainloop is reached
+    # 1. Running the main loop
     # 2. People is unloaded
     # 3. People is loaded
     def progressTime(self, timePassed: float):
-        # For people inside, they're journeying. Thus, journey time is increased
+        # Journey time is increased for people inside
         for floor in self.internalQueue.queue:
             for people in floor:
                 setattr(people, "journeyTimer", people.journeyTimer + timePassed)
-        # For people outside, they're waiting. Thus, waiting time is increased
-        for floor in self.externalQueueUp.queue:
+        # Waiting time is increased for people outside
+        for floor in itr.chain(
+            self.externalQueueUp.queue, self.externalQueueDown.queue
+        ):
             for people in floor:
                 setattr(people, "waitingTimer", people.waitingTimer + timePassed)
-        for floor in self.externalQueueDown.queue:
-            for people in floor:
-                setattr(people, "waitingTimer", people.waitingTimer + timePassed)
-    
+
+    # Increments the elevator break count of people inside internal queue
+    # Calls after people get loaded or unloaded from the elevator.
     def progressElevatorBreakCount(self):
         for floor in self.internalQueue.queue:
             for people in floor:
                 setattr(people, "elevatorBreakCount", people.elevatorBreakCount + 1)
 
-    # Adding people to external queue
+    # Force add people to external queue
+    # Automatically separates between queue up and queue down
     def addToExternalQueue(self, *args: People):
         peopleUp, peopleDown = [], []
         [
@@ -141,7 +139,7 @@ class Elevator:
         self.externalQueueDown.appendToQueue(*peopleDown)
         self.updateNextFloor()
 
-    # Adding people to internal queue
+    # Force add people to internal queue
     def addToInternalQueue(self, *args: People):
         for people in args:
             self.internalQueue.appendToQueue(people)
@@ -169,17 +167,23 @@ class Elevator:
             reverseCheckLimit = self.lowestFloor - 1
             reverseCheckStep = -1
         # Check if the elevator should revert direction or not
-        for floor in range(self.currentFloor + reverseCheckStep, reverseCheckLimit, reverseCheckStep):
+        for floor in range(
+            self.currentFloor + reverseCheckStep, reverseCheckLimit, reverseCheckStep
+        ):
             if (
                 self.internalQueue.queue[floor]
                 or self.externalQueueDown.queue[floor]
                 or self.externalQueueUp.queue[floor]
             ):
-               break
+                break
         else:
-            self.currentDirection = not self.currentDirection 
+            if not (
+                (self.currentFloor == self.highestFloor)
+                or (self.currentFloor == self.lowestFloor)
+            ):
+                self.currentDirection = not self.currentDirection
 
-        # Actually loading the people into internal queue
+        # Loads the people into internal queue
         if self.currentDirection:
             for people in self.externalQueueUp.queue[self.currentFloor]:
                 cumulativePeopleAmount += people.amount
@@ -188,6 +192,7 @@ class Elevator:
                 else:
                     self.addToInternalQueue(people)
                 peopleIndex += 1
+                self.externalQueueUp.peopleAmount -= 1
             else:
                 self.externalQueueUp.queue[self.currentFloor] = (
                     self.externalQueueUp.queue[self.currentFloor][peopleIndex:]
@@ -200,6 +205,7 @@ class Elevator:
                 else:
                     self.addToInternalQueue(people)
                 peopleIndex += 1
+                self.externalQueueDown.peopleAmount -= 1
             else:
                 self.externalQueueDown.queue[self.currentFloor] = (
                     self.externalQueueDown.queue[self.currentFloor][peopleIndex:]
@@ -209,14 +215,20 @@ class Elevator:
 
     # Progressing the elevator
     def progressElevator(self):
+        if (
+            self.internalQueue.peopleAmount
+            + self.externalQueueDown.peopleAmount
+            + self.externalQueueUp.peopleAmount
+            == 0
+        ):
+            return None
+
         nextFloorDifference = abs(self.nextFloor - self.currentFloor)
         # Setting the speed of the elevator
         speed = 0
         if nextFloorDifference > 1:  # If the elevator isn't adjacent to the next floor
             speed = self.activeSpeed  # Set the speed to be the default speed
-        elif (
-            nextFloorDifference == 1
-        ):  # Else (If the elevator IS adjacent to the next floor)
+        elif nextFloorDifference == 1:  # If the elevator is adjacent to the next floor
             if (
                 self.progression >= self.bufferCutoff
             ):  # Check whether the elevator is in the buffer or not
@@ -240,3 +252,43 @@ class Elevator:
                 self.currentFloor -= 1
         # Add time to all the people in the elevator
         self.progressTime(self.timePerStep)
+
+    def printElevatorInfo(self):
+        print(f"Progression: {self.progression}")
+        print(f"Current Floor: {self.currentFloor}")
+        print(f"Next Floor: {self.nextFloor}")
+        print(f"Current Direction: {self.currentDirection}")
+
+        floorAmount = self.highestFloor - self.lowestFloor + 1
+        internalQueuePrint = [[] for _ in range(floorAmount)]
+        externalQueueUpPrint = [[] for _ in range(floorAmount)]
+        externalQueueDownPrint = [[] for _ in range(floorAmount)]
+        outlistPrint = []
+        for floor in range(self.lowestFloor, self.highestFloor + 1, 1):
+            [
+                internalQueuePrint[floor].append(
+                    (people.startingFloor, people.destinationFloor)
+                )
+                for people in self.internalQueue.queue[floor]
+            ]
+            [
+                externalQueueDownPrint[floor].append(
+                    (people.startingFloor, people.destinationFloor)
+                )
+                for people in self.externalQueueDown.queue[floor]
+            ]
+            [
+                externalQueueUpPrint[floor].append(
+                    (people.startingFloor, people.destinationFloor)
+                )
+                for people in self.externalQueueUp.queue[floor]
+            ]
+        [
+            outlistPrint.append((people.startingFloor, people.destinationFloor))
+            for people in self.outlist.outlist
+        ]
+
+        print(f"Internal Queue: {pp.pformat(internalQueuePrint)}")
+        print(f"External Queue Up: {pp.pformat(externalQueueUpPrint)}")
+        print(f"External Queue Down: {pp.pformat(externalQueueDownPrint)}")
+        print(f"Outlist: {pp.pformat(outlistPrint)}")
