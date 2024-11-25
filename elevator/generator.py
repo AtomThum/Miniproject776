@@ -16,6 +16,7 @@ class Generator:
         attemptPerCall: int,
         probability: float,
     ):
+        self.initFloor = initFloor
         self.targetElevator = targetElevator
 
         self.finalFloorRange = finalFloorRange
