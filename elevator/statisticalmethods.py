@@ -8,26 +8,35 @@ from elevator.queues import ExternalQueue, InternalQueue, Outlist
 
 
 class OutlistMethods:
-    @staticmethod
-    def sumWaitingTime(outlist: Outlist):
-        return sum(people.waitingTimer for people in outlist.outlist)
+    def __init__(self, outlist):
+        self.outlist = outlist
 
-    @staticmethod
-    def sumJourneyTime(outlist: Outlist):
-        return sum(people.journeyTimer for people in outlist.outlist)
+    def sumWaitingTime(self):
+        return sum(people.waitingTimer for people in self.outlist.outlist)
 
-    @staticmethod
-    def sumElevatorBreakCount(outlist: Outlist):
-        return sum(people.elevatorBreakCount for people in outlist.outlist)
+    def sumJourneyTime(self):
+        return sum(people.journeyTimer for people in self.outlist.outlist)
 
-    def meanWaitingTime(self, outlist: Outlist):
-        return self.sumWaitingTime(outlist) / len(outlist.outlist)
+    def sumElevatorBreakCount(self):
+        return sum(people.elevatorBreakCount for people in self.outlist.outlist)
 
-    def meanJourneyTime(self, outlist: Outlist):
-        return self.sumJourneyTime(outlist) / len(outlist.outlist)
+    def meanWaitingTime(self):
+        try:
+            return self.sumWaitingTime() / len(self.outlist.outlist)
+        except ZeroDivisionError:
+            return 0
 
-    def meanElevatorBreakCount(self, outlist: Outlist):
-        return self.sumElevatorBreakCount(outlist) / len(outlist.outlist)
+    def meanJourneyTime(self):
+        try:
+            return self.sumJourneyTime() / len(self.outlist.outlist)
+        except ZeroDivisionError:
+            return 0
+
+    def meanElevatorBreakCount(self):
+        try:
+            return self.sumElevatorBreakCount() / len(self.outlist.outlist)
+        except ZeroDivisionError:
+            return 0
 
 
 class QueueMethods:

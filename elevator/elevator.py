@@ -1,3 +1,4 @@
+import copy as cp
 import itertools as itr
 import pprint as pp
 
@@ -52,7 +53,13 @@ class Elevator:
         self.externalQueueDown = externalQueueDown
         self.outlist = outlist
 
-    def updateEdgeDirection(self):
+    # Finding the next floor that the elevator should travel to
+    def scanNextFloor(self):
+        # If elevator isn't stationary yet, do nothing
+        if self.progression != 0:
+            return self.nextFloor
+
+        # Force set the elevator's direction only if the elevator is at the lowest/highest floor
         isAtLowestFloor = self.currentFloor == self.lowestFloor
         isAtHighestFloor = self.currentFloor == self.highestFloor
         if isAtLowestFloor:
@@ -60,43 +67,48 @@ class Elevator:
         elif isAtHighestFloor:
             self.currentDirection = False
 
-    # Finding the next floor that the elevator should travel to
-    def scanNextFloor(self):
+        # If the elevator has reached its carrying capacity, pass the queues without the current floor into the scan algorithm
+        # Else, pass in the whole queue for scanning
+        if self.internalQueue.peopleAmount >= self.carryingCapacity:
+            _externalQueueUp = cp.copy(self.externalQueueUp.queue)
+            _externalQueueDown = cp.copy(self.externalQueueDown.queue)
+            _externalQueueUp[self.currentFloor] = []
+            _externalQueueDown[self.currentFloor] = []
+        else:
+            _externalQueueUp = self.externalQueueUp.queue
+            _externalQueueDown = self.externalQueueDown.queue
+        
+        # A-Scan algorithm (Modified)
         if self.currentDirection:  # If the elevator is going up
             for floor in range(
                 self.currentFloor, self.highestFloor + 1, 1
             ):  # Check from the current floor to the highest.
-                if self.internalQueue.queue[floor] or self.externalQueueUp.queue[floor]:
+                if self.internalQueue.queue[floor] or _externalQueueUp[floor]:
                     return floor
             for floor in range(
                 self.highestFloor, self.lowestFloor - 1, -1
             ):  # If there is no one, then revert direction and check from the highest to the lowest
-                if (
-                    self.internalQueue.queue[floor]
-                    or self.externalQueueDown.queue[floor]
-                ):
+                if self.internalQueue.queue[floor] or _externalQueueDown[floor]:
                     return floor
         else:  # If the elevator is going down
             for floor in range(
                 self.currentFloor, self.lowestFloor - 1, -1
             ):  # Check from the current floor to the lowest
-                if (
-                    self.internalQueue.queue[floor]
-                    or self.externalQueueDown.queue[floor]
-                ):
+                if self.internalQueue.queue[floor] or _externalQueueDown[floor]:
                     return floor
             for floor in range(
                 self.lowestFloor, self.highestFloor + 1, 1
             ):  # If there is no one, then revert the direction and check from the lowest to highest
-                if self.internalQueue.queue[floor] or self.externalQueueUp.queue[floor]:
+                if self.internalQueue.queue[floor] or _externalQueueUp[floor]:
                     return floor
         return self.currentFloor
 
     # Updating the next floor
     # Only changes when people are added or removed
     def updateNextFloor(self):
-        self.updateEdgeDirection()
+        # Scan for the next floor
         self.nextFloor = self.scanNextFloor()
+        # Force set the elevator direction according to the next floor
         if self.nextFloor - self.currentFloor > 0:
             self.currentDirection = True
         elif self.nextFloor - self.currentFloor < 0:
@@ -158,6 +170,8 @@ class Elevator:
     # Load people from external queue to internal
     def loadToInternalQueue(self):
         roomLeft = self.carryingCapacity - self.internalQueue.peopleAmount
+        if roomLeft == 0:
+            return None
         cumulativePeopleAmount = 0
         peopleIndex = 0
 
