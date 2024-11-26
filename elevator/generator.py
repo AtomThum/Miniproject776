@@ -34,10 +34,8 @@ class Generator:
         generatedPeople = []
         for _ in range(self.attemptPerCall):
             if (
-                random.random() > self.probability
-            ):  # Don't generate if random variable is more than fixed probability
-                pass
-            else:
+                random.random() < self.probability
+            ):
                 finalFloor = random.choices(
                     population=self.finalFloorRange, weights=self.finalFloorWeight, k=1
                 )[0]  # Generate final floor
