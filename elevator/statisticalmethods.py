@@ -1,9 +1,10 @@
-from elevator.elevator import Elevator
-from elevator.people import People
-from elevator.queues import Outlist, InternalQueue, ExternalQueue
+import copy as cp
 import itertools as itr
 import pprint as pp
-import copy as cp
+
+from elevator.elevator import Elevator
+from elevator.people import People
+from elevator.queues import ExternalQueue, InternalQueue, Outlist
 
 
 class OutlistMethods:

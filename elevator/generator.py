@@ -1,6 +1,7 @@
+import random
+
 from elevator.elevator import Elevator
 from elevator.people import People
-import random
 
 
 # Generating people
@@ -37,11 +38,8 @@ class Generator:
             ):  # Don't generate if random variable is more than fixed probability
                 pass
             else:
-
                 finalFloor = random.choices(
-                    population=self.finalFloorRange,
-                    weights=self.finalFloorWeight,
-                    k=1
+                    population=self.finalFloorRange, weights=self.finalFloorWeight, k=1
                 )[0]  # Generate final floor
 
                 peopleAmount = random.choices(

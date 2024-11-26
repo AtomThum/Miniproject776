@@ -1,7 +1,8 @@
-from elevator.people import People
-from elevator.queues import Outlist, InternalQueue, ExternalQueue
 import itertools as itr
 import pprint as pp
+
+from elevator.people import People
+from elevator.queues import ExternalQueue, InternalQueue, Outlist
 
 
 # Initializing the Elevator class

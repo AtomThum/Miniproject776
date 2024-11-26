@@ -1,5 +1,6 @@
 from elevator.people import People
 
+
 # Outlist - for storing people that already left the elevator.
 class Outlist:
     def __init__(self, outlist: list = []):
