@@ -6,25 +6,28 @@ import pprint as pp
 import copy as cp
 
 
-class QueueMethods:
-    def __init__(self, queue: InternalQueue|ExternalQueue):
-        self.queue = queue
-        self.floorAmount = cp.copy(queue.floorAmount)
-    
-    def sumWaitingTime(self):
-        waitingTime = 0
-        for floor in range(self.floorAmount):
-            for people in self.queue.queue[floor]:
-                waitingTime += people.waitingTimer
-        return waitingTime
-
-    def sumJourneyTime(self):
-        journeyTime = 0
-        for floor in range(self.floorAmount):
-            for people in self.queue.queue[floor]:
-                journeyTime += people.journeyTime
-        return journeyTime
-            
-
 class OutlistMethods:
+    @staticmethod
+    def sumWaitingTime(outlist: Outlist):
+        return sum(people.waitingTimer for people in outlist.outlist)
+
+    @staticmethod
+    def sumJourneyTime(outlist: Outlist):
+        return sum(people.journeyTimer for people in outlist.outlist)
+
+    @staticmethod
+    def sumElevatorBreakCount(outlist: Outlist):
+        return sum(people.elevatorBreakCount for people in outlist.outlist)
+
+    def meanWaitingTime(self, outlist: Outlist):
+        return self.sumWaitingTime(outlist) / len(outlist.outlist)
+
+    def meanJourneyTime(self, outlist: Outlist):
+        return self.sumJourneyTime(outlist) / len(outlist.outlist)
+
+    def meanElevatorBreakCount(self, outlist: Outlist):
+        return self.sumElevatorBreakCount(outlist) / len(outlist.outlist)
+
+
+class QueueMethods:
     pass
